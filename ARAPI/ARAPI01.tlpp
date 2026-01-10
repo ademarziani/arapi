@@ -1,0 +1,34 @@
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | ARAPI01 | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: 
+|----------------------------------------------------------------------
+======================================================================*/
+User Function ARAPI01
+
+	Local aColores		:= {}
+	Local aGetDados		:= {}
+
+	Private oBrwDC
+	Private oRecibo
+	Private lFiltro	:= .F.
+	
+	oBrwDC := ARBrowse():New("ZJ1","Configuracion API",,,aColores)
+	
+	aAdd(aGetDados, ARGetDados():New("Encabezado", Nil, Nil, .T.))
+	aAdd(aGetDados, ARGetDados():New("Detalle 1", Nil, Nil, .T.))
+	aAdd(aGetDados, ARGetDados():New("Detalle 2", Nil, Nil, .T.))
+	aAdd(aGetDados, ARGetDados():New("Parametros", Nil, Nil, .T.))
+	aAdd(aGetDados, ARGetDados():New("Salida", Nil, Nil, .T.))
+
+	aGetDados[1]:setTabla("ZJ2", 1, "ZJ2_ITEM", {{"ZJ2_CODIGO", "M->ZJ1_CODIGO"}})
+	aGetDados[2]:setTabla("ZJ3", 1, "ZJ3_ITEM", {{"ZJ3_CODIGO", "M->ZJ1_CODIGO"}})
+	aGetDados[3]:setTabla("ZJ4", 1, "ZJ4_ITEM", {{"ZJ4_CODIGO", "M->ZJ1_CODIGO"}})
+	aGetDados[4]:setTabla("ZJ6", 1, "ZJ6_ITEM", {{"ZJ6_CODIGO", "M->ZJ1_CODIGO"}})
+	aGetDados[5]:setTabla("ZJ5", 1, "ZJ5_ITEM", {{"ZJ5_CODIGO", "M->ZJ1_CODIGO"}})
+	
+	oBrwDC:setGetDados(aGetDados)
+	oBrwDC:iniciar()
+
+Return Nil
