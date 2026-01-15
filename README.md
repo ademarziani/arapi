@@ -293,7 +293,7 @@ Authorization: Bearer <token>
 ## 6. Swagger (Documentación de la API)
 
 La documentación Swagger se genera automáticamente a partir de la configuraciones que se fueron cargando en las tablas ZJ1, ZJ2, ZJ3, ZJ4, ZJ5, ZJ6.
-A partir del swagger, el usuario y/o desarrollador podra verificar los parametros de entrada y salida de cada endpoint configurado como asi, la forma en que deberán hacer las peticiones correspondientes.
+A partir del swagger, el usuario y/o desarrollador podra verificar los parametros de entrada y salida de cada endpoint configurado y verificar la forma en que deberán hacer las peticiones correspondientes.
 
 ### URL del Swagger
 
