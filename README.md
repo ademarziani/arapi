@@ -189,6 +189,7 @@ Dentro de la estructura definida por `RootPath` del AppServer (por ejemplo `Prot
 ```
 /arapi
 ```
+Luego, crear los siguientes archivos:
 
 ### 4.1 Archivo `config.json`
 
