@@ -239,9 +239,13 @@ Dentro de la estructura definida por `RootPath` del AppServer (por ejemplo `Prot
 Lista de endpoints que **NO requieren autenticación por token**:
 
 ```
-/arapi/99/01/docs
-/arapi/99/01/openapi.json
+/arapi/{codigo_empresa}/{codigo_sucursal}/docs
+/arapi/{codigo_empresa}/{codigo_sucursal}/openapi.json
 ```
+Donde:
+
+* `codigo_empresa` Codigo de empresa segun el ambiente del cliente.
+* `codigo_sucursal` Codigo de sucursal segun el ambiente del cliente.
 
 ---
 
@@ -249,17 +253,36 @@ Lista de endpoints que **NO requieren autenticación por token**:
 
 ### Endpoint de obtención de token
 
+Para poder ejecutar cada uno de los endpoints a partir de la APIs configuradas, primero se debera obtener el token.
+
 ```
-/tlpp/oauth2/token
+https://{servidor}:{puerto}/{path_segun_ini}/tlpp/oauth2/token
 ```
+
+Donde:
+* `servidor`: Alias o Dominio del servidor segun ambiente del cliente.
+* `puerto`: Numero de puerto en donde se configuro el servicio API Rest.
+* `path_segun_ini`: corresponde a:
+
+```ini
+[HTTP_ROOT]
+Path=/rest
+```
+* `codigo_empresa`: Codigo de empresa segun el ambiente del cliente.
+* `codigo_sucursal`: Codigo de sucursal segun el ambiente del cliente.
+
+Parametros:
+* `grant_type`: Valor fijo "password"
+* `username`: Codigo de usuario segun la configuracion establecida en config.json
+* `password`: Contrasena para el usuario informado, segun la configuracion establecida en config.json
 
 Ejemplo:
 
 ```
-tlpp/oauth2/token?grant_type=password&username=ademir_da_guia&password=F1t3bol
+https://localhost:9995/rest/tlpp/oauth2/token?grant_type=password&username=ademir_da_guia&password=F1t3bol
 ```
 
-El token debe enviarse como:
+Una vez obtenido el token, el mismo debera enviarse para cada API configurada como:
 
 ```
 Authorization: Bearer <token>
@@ -269,13 +292,25 @@ Authorization: Bearer <token>
 
 ## 6. Swagger (Documentación de la API)
 
-La documentación Swagger se genera automáticamente a partir de la configuración.
+La documentación Swagger se genera automáticamente a partir de la configuraciones que se fueron cargando en las tablas ZJ1, ZJ2, ZJ3, ZJ4, ZJ5, ZJ6.
 
 ### URL del Swagger
 
 ```
-{servidor}/{path_segun_ini}/arapi/99/01/docs
+https://{servidor}:{puerto}/{path_segun_ini}/arapi/{codigo_empresa}/{codigo_sucursal}/docs
 ```
+
+Donde 
+* `servidor` Alias o Dominio del servidor segun ambiente del cliente.
+* `puerto` Numero de puerto en donde se configuro el servicio API Rest.
+* `path_segun_ini` corresponde a:
+
+```ini
+[HTTP_ROOT]
+Path=/rest
+```
+* `codigo_empresa` Codigo de empresa segun el ambiente del cliente.
+* `codigo_sucursal` Codigo de sucursal segun el ambiente del cliente.
 
 Ejemplo:
 
@@ -283,12 +318,7 @@ Ejemplo:
 https://localhost:9995/rest/arapi/99/01/docs
 ```
 
-Donde `path_segun_ini` corresponde a:
 
-```ini
-[HTTP_ROOT]
-Path=/rest
-```
 
 ---
 
