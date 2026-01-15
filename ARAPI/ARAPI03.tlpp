@@ -1,0 +1,65 @@
+#include "Protheus.ch"
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | TestArApi | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Funcion de testeo de la API desde un dialogo
+|----------------------------------------------------------------------
+======================================================================*/
+User Function TestArApi()
+
+Local cGCodAPI   := Space(20)
+Local oGCodAPI
+Local oMBody
+Local cMBody    
+Local oMResponse
+Local cMResponse
+Local oSCod
+Local oBtnValid
+Local oDlgTest
+
+Local cOper := "GET"
+Local aOper := {"GET", "POST", "PUT", "DELETE"}
+
+oDlgTest   := MSDialog():New( 092,232,666,1199,"Test API",,,.F.,,,,,,.T.,,,.T. )
+oSCod      := TSay():New( 004,004,{||"Codigo API"},oDlgTest,,,.F.,.F.,.F.,.T.,CLR_BLACK,CLR_WHITE,032,008)
+oGCodAPI   := TGet():New( 003,036,{|u| If(PCount()>0,cGCodAPI:=u,cGCodAPI)},oDlgTest,136,008,'',,CLR_BLACK,CLR_WHITE,,,,.T.,"",,,.F.,.F.,,.F.,.F.,"","cGCodAPI",,)
+oMBody     := TMultiGet():New( 016,004,{|u| If(PCount()>0,cMBody:=u,cMBody)},oDlgTest,232,260,,,CLR_BLACK,CLR_WHITE,,.T.,"",,,.F.,.F.,.F.,,,.F.,,  )
+oMResponse := TMultiGet():New( 016,244,{|u| If(PCount()>0,cMResponse:=u,cMResponse)},oDlgTest,228,260,,,CLR_BLACK,CLR_WHITE,,.T.,"",,,.F.,.F.,.F.,,,.F.,,  )
+@ 003,180 COMBOBOX oCOper Var cOper ITEMS aOper VALID ( lRet := .T. ) PIXEL SIZE 072,010
+oBtnValid  := TButton():New( 003,260,"Validar",oDlgTest,{|| Processa({|| cMResponse := fEjecucionTestApi(cOper, cGCodAPI, cMBody)}, "Ejecuntando Llamada a API",,.T.)},037,010,,,,.T.,,"",,,,.F. )
+
+oDlgTest:Activate(,,,.T.)
+
+Return Nil
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fEjecucionTestApi | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Funcion para ejecutar la API en modo test
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fEjecucionTestApi(cOper, cCodApi, cBody)
+
+    Local cResponse := ""
+
+    Do Case
+        Case cOper == "GET"
+            cResponse := U_ArApiGet(.T., cCodApi, cBody)
+
+        Case cOper == "POST"
+            cResponse := U_ArApiPost(.T., cCodApi, cBody)
+
+        Case cOper == "PUT"
+            cResponse := U_ArApiPut(.T., cCodApi, cBody)
+
+        Case cOper == "DELETE"
+            cResponse := U_ArApiDelete(.T., cCodApi, cBody)
+
+        Otherwise
+            cResponse := '{ "error": "Operacion no implementada en test" }'
+    EndCase
+
+Return cResponse

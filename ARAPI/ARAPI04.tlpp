@@ -1,0 +1,421 @@
+
+#include "tlpp-core.th"
+#include "tlpp-rest.th"
+#include "Protheus.ch"
+#include "fileio.ch"
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | ArApiOpenApi | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Decorador: @Get
+|----------------------------------------------------------------------
+| Descripcion: Muestra el JSON OpenAPI dinámicamente
+|----------------------------------------------------------------------
+======================================================================*/
+@Get("arapi/:emp/:suc/openapi.json")
+User Function ArApiOpenApi(lTest, cApiTest, cBodyTest)
+
+    Local jPath
+    Local cBody
+    Local cEmp
+    Local cSuc
+    Local cCodApi := ""   // no aplica acá
+
+    Local jHdr     := JsonObject():New()
+    Local cJson    := ""
+
+    Default lTest := .F.
+
+    // Inicialización estándar
+    ARAPIFUN():fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
+    ARAPIFUN():fIniciaAmbiente(lTest, cEmp, cSuc, @cCodApi)
+
+    TRY
+        cJson := fBuildOpenApiJson(cEmp, cSuc)
+
+        jHdr["Content-Type"] := "application/json; charset=utf-8"
+        oRest:setHeaderResponse(jHdr)
+
+    CATCH oError
+        cJson := ARAPIFUN():fMountErrorJson({ oError:Description })
+    ENDTRY
+
+    ARAPIFUN():fCierraAmbiente(lTest)
+
+    If lTest
+        Return cJson
+    EndIf
+
+Return oRest:setResponse(cJson)
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | ArApiDocs | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Decorador: @Get
+|----------------------------------------------------------------------
+| Descripcion: Muestra la documentación Swagger UI
+|----------------------------------------------------------------------
+======================================================================*/
+@Get("arapi/:emp/:suc/docs")
+User Function ArApiDocs(lTest, cApiTest, cBodyTest)
+
+    Local jPath
+    Local cBody
+    Local cEmp
+    Local cSuc
+    Local cCodApi := ""
+
+    Local jHdr := JsonObject():New()
+    Local cHtml := ""
+
+    ARAPIFUN():fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
+
+    jHdr["Content-Type"] := "text/html; charset=utf-8"
+    oRest:setHeaderResponse(jHdr)
+
+    cHtml += '<!doctype html>'
+    cHtml += '<html><head>'
+    cHtml += '<meta charset="utf-8"/>'
+    cHtml += '<title>ArApi Swagger</title>'
+    cHtml += '<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />'
+    cHtml += '</head><body>'
+    cHtml += '<div id="swagger-ui"></div>'
+    cHtml += '<script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>'
+    cHtml += '<script>'
+    cHtml += 'SwaggerUIBundle({'
+    cHtml += 'url:"/arapi/'+cEmp+'/'+cSuc+'/openapi.json",'
+    cHtml += 'dom_id:"#swagger-ui"'
+    cHtml += '});'
+    cHtml += '</script>'
+    cHtml += '</body></html>'
+
+Return oRest:setResponse(cHtml)
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fBuildOpenApiJson | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Genera el JSON OpenAPI dinámicamente
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fBuildOpenApiJson(cEmp, cSuc)
+
+    Local oSpec  := JsonObject():New()
+    Local oInfo  := JsonObject():New()
+    Local oPaths := JsonObject():New()
+
+    oSpec["openapi"] := "3.0.3"
+
+    oInfo["title"]       := "ArApi - Protheus"
+    oInfo["version"]     := "1.0.0"
+    oInfo["description"] := "OpenAPI generado dinamicamente desde ZJ1/ZJ2/ZJ3/ZJ4/ZJ5/ZJ6"
+    oSpec["info"] := oInfo
+
+    oSpec["servers"] := {}
+    AAdd(oSpec["servers"], JsonObject():New())
+    oSpec["servers"][1]["url"] := "/"
+
+    oPaths := fBuildArApiPaths()
+
+    // Agrego el endpoint de archivos
+    oPaths["/arapi/file/{emp}/{suc}/{codigo-api}/{filename}"] := fBuildFileGetOperation()
+
+    oSpec["paths"] := oPaths
+
+Return oSpec:toJson()
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fBuildArApiPaths | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Genera los paths para ArApi
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fBuildArApiPaths()
+
+    Local oPaths := JsonObject():New()
+    Local cPath  := "/arapi/{emp}/{suc}/{codigo-api}"
+
+    // Armamos el nodo del path una sola vez
+    oPaths[cPath] := JsonObject():New()
+
+    // GET / POST / PUT / DELETE: describimos la “forma general”
+    // (Swagger no puede generar 1 endpoint por cada cCodApi porque tu endpoint es uno solo con variable {codigo-api})
+    // PERO: podemos documentar los posibles valores con enum leyendo ZJ1.
+
+    oPaths[cPath]["get"]    := fBuildArApiGetOperation()
+    oPaths[cPath]["post"]   := fBuildArApiWriteOperation("post")
+    oPaths[cPath]["put"]    := fBuildArApiWriteOperation("put")
+    oPaths[cPath]["delete"] := fBuildArApiWriteOperation("delete")
+
+    // Enum dinámico de codigo-api desde ZJ1
+    fFillCodigoApiEnum(@oPaths, cPath)
+
+Return oPaths
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fFillCodigoApiEnum | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Llena el enum de codigo-api leyendo ZJ1
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fFillCodigoApiEnum(oPaths, cPath)
+
+    Local aEnum := {}
+    Local cCod  := ""
+
+    dbSelectArea("ZJ1")
+    dbSetOrder(1)
+    ZJ1->(dbGoTop())
+
+    While !ZJ1->(Eof())
+        cCod := AllTrim(ZJ1->ZJ1_CODIGO)
+        If !Empty(cCod)
+            AAdd(aEnum, cCod)
+        EndIf
+        ZJ1->(dbSkip())
+    EndDo
+
+    // Aplica al parámetro path codigo-api en todos los métodos
+    fApplyEnumToCodigoApiParam(oPaths[cPath]["get"],    aEnum)
+    fApplyEnumToCodigoApiParam(oPaths[cPath]["post"],   aEnum)
+    fApplyEnumToCodigoApiParam(oPaths[cPath]["put"],    aEnum)
+    fApplyEnumToCodigoApiParam(oPaths[cPath]["delete"], aEnum)
+
+Return Nil
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fApplyEnumToCodigoApiParam | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Aplica el enum al parámetro path codigo-api
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fApplyEnumToCodigoApiParam(oOper, aEnum)
+
+    Local nI
+    Local aParams := oOper["parameters"]
+
+    For nI := 1 To Len(aParams)
+        If aParams[nI]["name"] == "codigo-api"
+            aParams[nI]["schema"]["enum"] := aEnum
+            Exit
+        EndIf
+    Next
+
+Return Nil
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fBuildArApiGetOperation | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Genera la operación GET para ArApi
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fBuildArApiGetOperation()
+
+    Local o := JsonObject():New()
+
+    o["summary"]     := "Consulta dinamica (configurable por ZJ1)"
+    o["description"] := "Body opcional con { params:{} } validado por ZJ6. Salida segun ZJ5."
+    o["parameters"]  := fStdPathParams()
+
+    // requestBody (opcional)
+    o["requestBody"] := JsonObject():New()
+    o["requestBody"]["required"] := .F.
+    o["requestBody"]["content"] := JsonObject():New()
+    o["requestBody"]["content"]["application/json"] := JsonObject():New()
+    o["requestBody"]["content"]["application/json"]["schema"] := fSchemaGetBody()
+
+    // responses
+    o["responses"] := JsonObject():New()
+    o["responses"]["200"] := JsonObject():New()
+    o["responses"]["200"]["description"] := "OK"
+    o["responses"]["200"]["content"] := JsonObject():New()
+    o["responses"]["200"]["content"]["application/json"] := JsonObject():New()
+    o["responses"]["200"]["content"]["application/json"]["schema"] := fSchemaGetResponse()
+
+Return o
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fBuildArApiWriteOperation | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Genera la operación POST/PUT/DELETE para ArApi
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fBuildArApiWriteOperation(cVerb)
+
+    Local o := JsonObject():New()
+
+    o["summary"] := "Operacion " + Upper(cVerb) + " dinamica (configurable por ZJ1)"
+    o["description"] := "Entrada validada por ZJ2/ZJ3/ZJ4 (obligatoriedad y VALID/MENSAJ). Depende de ZJ1_EDATO."
+    o["parameters"] := fStdPathParams()
+
+    o["requestBody"] := JsonObject():New()
+    o["requestBody"]["required"] := .T.
+    o["requestBody"]["content"] := JsonObject():New()
+    o["requestBody"]["content"]["application/json"] := JsonObject():New()
+    o["requestBody"]["content"]["application/json"]["schema"] := fSchemaWriteBodyGeneric()
+
+    o["responses"] := JsonObject():New()
+    o["responses"]["200"] := JsonObject():New()
+    o["responses"]["200"]["description"] := "OK / Error JSON"
+    o["responses"]["200"]["content"] := JsonObject():New()
+    o["responses"]["200"]["content"]["application/json"] := JsonObject():New()
+    o["responses"]["200"]["content"]["application/json"]["schema"] := fSchemaStdResponse()
+
+Return o
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fStdPathParams | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Genera los parámetros estándar de path
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fStdPathParams()
+
+    Local a := {}
+
+    AAdd(a, fParamPath("emp",       "string", .T., "Empresa"))
+    AAdd(a, fParamPath("suc",       "string", .T., "Sucursal"))
+    AAdd(a, fParamPath("codigo-api","string", .T., "Codigo de API (ZJ1_CODIGO)"))
+
+Return a
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fParamPath | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Genera un parámetro de path
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fParamPath(cName, cType, lReq, cDesc)
+
+    Local o := JsonObject():New()
+    o["name"]        := cName
+    o["in"]          := "path"
+    o["required"]    := lReq
+    o["description"] := cDesc
+    o["schema"]      := JsonObject():New()
+    o["schema"]["type"] := cType
+Return o
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fSchemaGetBody | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Genera el schema del body de GET
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fSchemaGetBody()
+
+    Local o := JsonObject():New()
+    o["type"] := "object"
+    o["properties"] := JsonObject():New()
+    o["properties"]["params"] := JsonObject():New()
+    o["properties"]["params"]["type"] := "object"
+    o["properties"]["params"]["additionalProperties"] := .T.
+
+Return o
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fSchemaGetResponse | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Genera el schema del response de GET
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fSchemaGetResponse()
+
+    Local o := JsonObject():New()
+    o["type"] := "array"
+    o["items"] := JsonObject():New()
+    o["items"]["type"] := "object"
+    o["items"]["additionalProperties"] := .T.
+Return o
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fSchemaWriteBodyGeneric | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Genera el schema genérico del body de POST/PUT/DELETE
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fSchemaWriteBodyGeneric()
+
+    Local o := JsonObject():New()
+
+    o["type"] := "object"
+    o["properties"] := JsonObject():New()
+
+    // encabezado
+    o["properties"]["encabezado"] := JsonObject():New()
+    o["properties"]["encabezado"]["type"] := "object"
+    o["properties"]["encabezado"]["additionalProperties"] := .T.
+
+    // detalle1
+    o["properties"]["detalle1"] := JsonObject():New()
+    o["properties"]["detalle1"]["type"] := "array"
+    o["properties"]["detalle1"]["items"] := JsonObject():New()
+    o["properties"]["detalle1"]["items"]["type"] := "object"
+    o["properties"]["detalle1"]["items"]["additionalProperties"] := .T.
+
+    // detalle2
+    o["properties"]["detalle2"] := JsonObject():New()
+    o["properties"]["detalle2"]["type"] := "array"
+    o["properties"]["detalle2"]["items"] := JsonObject():New()
+    o["properties"]["detalle2"]["items"]["type"] := "object"
+    o["properties"]["detalle2"]["items"]["additionalProperties"] := .T.
+
+Return o
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fSchemaStdResponse | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Genera el schema estándar de response
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fSchemaStdResponse()
+
+    Local o := JsonObject():New()
+    o["type"] := "object"
+    o["additionalProperties"] := .T.
+Return o
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fBuildFileGetOperation | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Genera la operación GET para descargar/visualizar archivo
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fBuildFileGetOperation()
+
+    Local o := JsonObject():New()
+    Local aParams := {}
+
+    o["summary"] := "Descarga/visualiza archivo (PDF)"
+    o["parameters"] := {}
+
+    AAdd(aParams, fParamPath("emp",       "string", .T., "Empresa"))
+    AAdd(aParams, fParamPath("suc",       "string", .T., "Sucursal"))
+    AAdd(aParams, fParamPath("codigo-api","string", .T., "Codigo de API (ZJ1_CODIGO)"))
+
+    // filename
+    AAdd(aParams, fParamPath("filename",  "string", .T., "Nombre de archivo"))
+
+    o["parameters"] := aParams
+
+    o["responses"] := JsonObject():New()
+    o["responses"]["200"] := JsonObject():New()
+    o["responses"]["200"]["description"] := "PDF"
+    o["responses"]["200"]["content"] := JsonObject():New()
+    o["responses"]["200"]["content"]["application/pdf"] := JsonObject():New()
+
+Return o

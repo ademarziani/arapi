@@ -1,0 +1,173 @@
+#include "tlpp-core.th"
+#Include "fileio.ch"
+#Include "protheus.ch"
+
+#define _rest_oAuth2_secret_          'V9!pK3@Sx#8LqR2D$WmZ7fE'
+#define _rest_oAuth2_access_expires   3600
+#define _rest_oAuth2_refresh_expires  'Date()+1'
+#define _rest_oAuth2_client_id        '160520'
+#define _rest_oAuth2_user             'api_user_test'
+#define _rest_oAuth2_password         'A7$Tn9@eQ!R4kZ8LxM2#P'
+ 
+Static cUserAPI     := ""
+Static cPassAPI     := ""
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | ArApiNoCheckUri | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Devuelve un array con las URIs que no requieren token.
+|              Se leen desde archivo externo si existe.
+|----------------------------------------------------------------------
+======================================================================*/
+User Function ArApiNoCheckUri()
+
+    Local aRet       := {} as Array
+    Local cFilePath  := "\arapi\allowed_uris.lst"
+    Local cLine      := ""
+
+    // Si existe el archivo, lo leemos
+    If File(cFilePath)
+        FT_FUse(cFilePath)
+        FT_FGotop()
+
+        While !FT_FEof()
+            cLine := AllTrim(FT_FReadLn())
+
+            // Ignorar líneas vacías o comentarios
+            If !Empty(cLine) .And. Left(cLine,1) <> "#" .And. Left(cLine,1) <> ";"
+                aAdd(aRet, cLine)
+            EndIf
+
+            FT_FSkip()
+        EndDo
+
+        FT_FUse()
+    EndIf
+
+Return aRet
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | ArApiParamsProvider | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Función que devuelve un objeto JSON con 
+|              los parametros para el proveedor de tokens
+|----------------------------------------------------------------------
+======================================================================*/
+User Function ArApiParamsProvider()
+ 
+  Local cArchivo    := "\arapi\config.json"
+  Local jTlppAux    := JSonObject():New()
+  Local jTlppParams := JSonObject():New()
+
+  Local cArcConfig  := ReadJsonFile(cArchivo)
+  Local cDefParams
+  Local cParJson
+
+  cDefParams := '{'+;
+    '"client_id":"'+_rest_oAuth2_client_id+'",'+;
+    '"client_secret":"'+_rest_oAuth2_secret_+'",'+;
+    '"username":"'+_rest_oAuth2_user+'",'+;
+    '"password":"'+ _rest_oAuth2_password+'",'+;
+    '"access_expires":'+cValToChar(_rest_oAuth2_access_expires)+','+;
+    '"refresh_expires":"'+_rest_oAuth2_refresh_expires+'",'+;
+    '"grant_type" : "password"'+;
+    '}'
+
+  If Empty(cArcConfig)
+    // Si no existe el archivo, uso los params por defecto
+    jTlppParams:fromJson(cDefParams)
+  Else
+    cParJson := jTlppAux:fromJson(cArcConfig)
+
+    // Si el JSON tiene un error, uso los params por defecto
+    If ValType(cParJson) == "C"
+      jTlppParams:fromJson(cDefParams)
+    Else
+      jTlppParams:fromJson(cArcConfig)
+    EndIf
+  EndIf
+
+Return jTlppParams
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | ReadJsonFile | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Función que lee un archivo JSON 
+|              y devuelve su contenido como cadena
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function ReadJsonFile(cFilePath)
+
+    Local cContent  := ""
+    Local cLine     := ""
+
+    // Abre el archivo en modo lectura
+    If !File(cFilePath)
+        Return ""
+    EndIf
+
+    FT_FUse(cFilePath)
+    FT_FGotop()	
+
+    While (!FT_FEof())
+        cLine    := AllTrim(FT_FREADLN())
+        cContent += cLine
+
+        FT_FSkip()
+    EndDo
+
+    FT_FUse()
+
+Return cContent
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | ArApiProtheusUser | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Función que lee las credenciales de Protheus desde JSON
+|              y actualiza las variables cUserAPI y cPassAPI
+|----------------------------------------------------------------------
+======================================================================*/
+User Function ArApiProtheusUser()
+
+    Local cFilePath  := "\arapi\user_protheus.json"
+    Local cContent   := ""
+    Local jUser      := JsonObject():New()
+    Local cParJson   := ""
+
+    // Lee el contenido del archivo
+    cContent := ReadJsonFile(cFilePath)
+
+    If !Empty(cContent)
+        cParJson := jUser:fromJson(cContent)
+
+        // Si no hubo error en el parseo
+        If ValType(cParJson) <> "C"
+            // Actualizar las variables static si existen en el JSON
+            If jUser["user"] <> Nil
+                cUserAPI := AllTrim(jUser["user"])
+            EndIf
+
+            If jUser["password"] <> Nil
+                cPassAPI := AllTrim(jUser["password"])
+            EndIf
+        EndIf
+    EndIf
+
+    FreeObj(jUser)
+
+Return Nil
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | ArApiGetProtheusUser | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Función que devuelve las credenciales de Protheus
+|              en un array: { usuario, password }
+|----------------------------------------------------------------------
+======================================================================*/
+User Function ArApiGetProtheusUser()
+Return { cUserAPI, cPassAPI }

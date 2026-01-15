@@ -1,0 +1,194 @@
+#include "Protheus.ch"
+
+/*=====================================================================
+|---------------------------------------------------------------------|
+| Programa | ARAPIFUN | Autor: Andres Demarziani | Fecha: 03/02/2020  |
+|---------------------------------------------------------------------|
+| Descripcion: Clase con funciones comunes para APIs REST             |
+|---------------------------------------------------------------------|
+| Cliente: DESAB                                                      |
+|---------------------------------------------------------------------|
+======================================================================*/
+CLASS ARAPIFUN
+	
+    STATIC METHOD fInitVars()
+    STATIC METHOD fIniciaAmbiente()
+    STATIC METHOD fMountErrorJson()
+    STATIC METHOD fEscapeJson()
+    STATIC METHOD fCierraAmbiente()
+    STATIC METHOD Str2Array()
+
+END CLASS
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fInitVars | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Inicializa variables comunes
+|----------------------------------------------------------------------
+======================================================================*/
+METHOD fInitVars(lTest, jPath, cBody, cEmp, cSuc, cCodApi, cBodyTest, cApiTest) CLASS ARAPIFUN
+
+    If lTest
+        cBody     := cBodyTest
+        cCodApi   := cApiTest
+    Else
+        jPath     := oRest:getPathParamsRequest()
+        cBody     := oRest:getBodyRequest()
+        cEmp      := jPath["emp"]
+        cSuc      := jPath["suc"]
+        cCodApi   := jPath["codigo-api"]
+    EndIf
+
+Return Nil
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fIniciaAmbiente | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Inicia el ambiente de ejecución
+|----------------------------------------------------------------------
+======================================================================*/
+METHOD fIniciaAmbiente(lTest, cEmp, cSuc, cCodApi) CLASS ARAPIFUN
+
+    Local aUserProtheus := U_ArApiGetProtheusUser()
+
+    If !lTest
+        RpcSetType(3)
+        RpcSetEnv(cEmp, cSuc, aUserProtheus[1], aUserProtheus[2], "FAT")
+    EndIf
+
+    cCodApi := PadR(cCodApi, TamSX3("ZJ1_CODIGO")[1])
+
+Return Nil
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fCierraAmbiente | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Cierra el ambiente de ejecución
+|----------------------------------------------------------------------
+======================================================================*/
+METHOD fCierraAmbiente(lTest) CLASS ARAPIFUN
+
+    If !lTest
+        // RpcClearEnv()
+    EndIf
+    
+Return Nil
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fMountErrorJson | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Funcion para armar el JSON de errores
+|----------------------------------------------------------------------
+======================================================================*/
+METHOD fMountErrorJson(aErrores) CLASS ARAPIFUN
+
+    Local cJson := '{ "error": "VALIDACION", "detalles": [' 
+    Local nI
+
+    For nI := 1 To Len(aErrores)
+        If nI > 1
+            cJson += ", "
+        EndIf
+        cJson += '"'+ARAPIFUN():fEscapeJson(aErrores[nI])+'"'
+    Next
+
+    cJson += "] }"
+
+Return cJson
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fEscapeJson | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Escapa texto para que sea seguro dentro de un JSON.
+|              Maneja:
+|               - Comillas dobles
+|               - Backslash
+|               - CR / LF
+|               - TAB
+|               - Backspace / FormFeed
+|               - Caracteres de control ASCII (0..31)
+======================================================================*/
+METHOD fEscapeJson(cText) CLASS ARAPIFUN
+
+    Local cRet  := ""
+    Local nPos
+    Local cChar
+    Local nAsc
+    Local cBS   := Chr(92)   // "\"
+
+    If cText == Nil
+        Return ""
+    EndIf
+
+    // Aseguro string
+    If ValType(cText) != "C"
+        cText := cValToChar(cText)
+    EndIf
+
+    For nPos := 1 To Len(cText)
+
+        cChar := SubStr(cText, nPos, 1)
+        nAsc  := Asc(cChar)
+
+        Do Case
+        // JSON mandatory escapes
+        Case cChar == '"'
+            cRet += cBS + '"'
+
+        Case cChar == cBS
+            cRet += cBS + cBS
+
+        // Control characters comunes
+        Case cChar == Chr(10)      // LF
+            cRet += cBS + "n"
+
+        Case cChar == Chr(13)      // CR
+            cRet += cBS + "r"
+
+        Case cChar == Chr(9)       // TAB
+            cRet += cBS + "t"
+
+        Case cChar == Chr(8)       // Backspace
+            cRet += cBS + "b"
+
+        Case cChar == Chr(12)      // Form feed
+            cRet += cBS + "f"
+
+        // Cualquier otro control ASCII (0..31)
+        Case nAsc >= 0 .And. nAsc < 32
+            cRet += " "
+
+        Otherwise
+            cRet += cChar
+        EndCase
+    Next nPos
+
+Return cRet
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | Str2Array | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Convierte una cadena separada por cSep en un array
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function Str2Array(cString, cSep)
+
+    Local aReturn := { },;
+        cAux    := cString,;
+        nPos    := 0
+
+    While At( cSep, cAux ) > 0
+    nPos := At( cSep, cAux )
+        Aadd( aReturn, SubStr( cAux, 1, nPos-1 ) )
+        cAux := SubStr( cAux, nPos+1 )
+    End
+
+    Aadd(aReturn, cAux)
+
+Return aReturn

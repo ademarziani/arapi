@@ -25,70 +25,6 @@
 
 /*=====================================================================
 |----------------------------------------------------------------------
-| Programa | TestArApi | Autor: Andres Demarziani
-|----------------------------------------------------------------------
-| Descripcion: Funcion de testeo de la API desde un dialogo
-|----------------------------------------------------------------------
-======================================================================*/
-User Function TestArApi()
-
-Local cGCodAPI   := Space(20)
-Local oGCodAPI
-Local oMBody
-Local cMBody    
-Local oMResponse
-Local cMResponse
-Local oSCod
-Local oBtnValid
-Local oDlgTest
-
-Local cOper := "GET"
-Local aOper := {"GET", "POST", "PUT", "DELETE"}
-
-oDlgTest   := MSDialog():New( 092,232,666,1199,"Test API",,,.F.,,,,,,.T.,,,.T. )
-oSCod      := TSay():New( 004,004,{||"Codigo API"},oDlgTest,,,.F.,.F.,.F.,.T.,CLR_BLACK,CLR_WHITE,032,008)
-oGCodAPI   := TGet():New( 003,036,{|u| If(PCount()>0,cGCodAPI:=u,cGCodAPI)},oDlgTest,136,008,'',,CLR_BLACK,CLR_WHITE,,,,.T.,"",,,.F.,.F.,,.F.,.F.,"","cGCodAPI",,)
-oMBody     := TMultiGet():New( 016,004,{|u| If(PCount()>0,cMBody:=u,cMBody)},oDlgTest,232,260,,,CLR_BLACK,CLR_WHITE,,.T.,"",,,.F.,.F.,.F.,,,.F.,,  )
-oMResponse := TMultiGet():New( 016,244,{|u| If(PCount()>0,cMResponse:=u,cMResponse)},oDlgTest,228,260,,,CLR_BLACK,CLR_WHITE,,.T.,"",,,.F.,.F.,.F.,,,.F.,,  )
-@ 003,180 COMBOBOX oCOper Var cOper ITEMS aOper VALID ( lRet := .T. ) PIXEL SIZE 072,010
-oBtnValid  := TButton():New( 003,260,"Validar",oDlgTest,{|| Processa({|| cMResponse := fEjecucionTestApi(cOper, cGCodAPI, cMBody)}, "Ejecuntando Llamada a API",,.T.)},037,010,,,,.T.,,"",,,,.F. )
-
-oDlgTest:Activate(,,,.T.)
-
-Return Nil
-
-/*=====================================================================
-|----------------------------------------------------------------------
-| Programa | fEjecucionTestApi | Autor: Andres Demarziani
-|----------------------------------------------------------------------
-| Descripcion: Funcion para ejecutar la API en modo test
-|----------------------------------------------------------------------
-======================================================================*/
-Static Function fEjecucionTestApi(cOper, cCodApi, cBody)
-
-    Local cResponse := ""
-
-    Do Case
-        Case cOper == "GET"
-            cResponse := U_ArApiGet(.T., cCodApi, cBody)
-
-        Case cOper == "POST"
-            cResponse := U_ArApiPost(.T., cCodApi, cBody)
-
-        Case cOper == "PUT"
-            cResponse := U_ArApiPut(.T., cCodApi, cBody)
-
-        Case cOper == "DELETE"
-            cResponse := U_ArApiDelete(.T., cCodApi, cBody)
-
-        Otherwise
-            cResponse := '{ "error": "Operacion no implementada en test" }'
-    EndCase
-
-Return cResponse
-
-/*=====================================================================
-|----------------------------------------------------------------------
 | Programa | ArApiGet | Autor: Andres Demarziani
 |----------------------------------------------------------------------
 | Decorador: @Get
@@ -125,8 +61,8 @@ User Function ArApiGet(lTest, cApiTest, cBodyTest)
 
     Default lTest   := .F.
 
-    fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
-    fIniciaAmbiente(lTest, cEmp, cSuc, @cCodApi)
+    ARAPIFUN():fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
+    ARAPIFUN():fIniciaAmbiente(lTest, cEmp, cSuc, @cCodApi)
 
     TRY 
         oJsonBody := JsonObject():New()
@@ -152,13 +88,13 @@ User Function ArApiGet(lTest, cApiTest, cBodyTest)
             aErrores := fValidaParamsGet(oJsonBody, aParamsCfg)
 
             If Len(aErrores) > 0
-                cResponse := fMountErrorJson(aErrores)
+                cResponse := ARAPIFUN():fMountErrorJson(aErrores)
             Else
                 // Levanto configuraciones de campos
                 fCposApi("ZJ5", cCodApi, @aCposOut)
 
                 If Len(aErrores) > 0
-                    cResponse := fMountErrorJson(aErrores)
+                    cResponse := ARAPIFUN():fMountErrorJson(aErrores)
                 Else
                     // Armo la query dinámica
                     cQuery := fArmaQry(oJsonBody, cSql)
@@ -185,11 +121,11 @@ User Function ArApiGet(lTest, cApiTest, cBodyTest)
 
     CATCH oError
         aAdd(aErrores, oError:Description)
-        cResponse := fMountErrorJson(aErrores)
+        cResponse := ARAPIFUN():fMountErrorJson(aErrores)
     ENDTRY
 
     FreeObj(oJsonBody)
-    fCierraAmbiente(lTest)
+    ARAPIFUN():fCierraAmbiente(lTest)
 
     If lTest
         xResponse := cResponse
@@ -275,8 +211,8 @@ Static Function fArApiWrite(nOper, lTest, cApiTest, cBodyTest)
 
     Default lTest   := .F.
 
-    fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
-    fIniciaAmbiente(lTest, cEmp, cSuc, @cCodApi)
+    ARAPIFUN():fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
+    ARAPIFUN():fIniciaAmbiente(lTest, cEmp, cSuc, @cCodApi)
 
     TRY 
         oJsonBody := JsonObject():New()
@@ -326,12 +262,12 @@ Static Function fArApiWrite(nOper, lTest, cApiTest, cBodyTest)
             EndIf
 
             If Len(aErrores) > 0
-                cResponse := fMountErrorJson(aErrores)
+                cResponse := ARAPIFUN():fMountErrorJson(aErrores)
             Else
                 // Validación existencia por clave (si está configurada)
                 If Len(aErrores) == 0 .And. !Empty(cTabela) .And. !Empty(cChave)
                     If !fValidaExistencia(nOper, cTabela, cChave, aEncab, @aErrores)
-                        cResponse := fMountErrorJson(aErrores)
+                        cResponse := ARAPIFUN():fMountErrorJson(aErrores)
                     EndIf
                 EndIf
 
@@ -342,7 +278,7 @@ Static Function fArApiWrite(nOper, lTest, cApiTest, cBodyTest)
                         cResponse := '{ "Status": "OK" }'
                         // cResponse := fMountPostDebugJson(aEncab, aDetalle1, aDetalle2)
                     Else
-                        cResponse := fMountErrorJson({cError})
+                        cResponse := ARAPIFUN():fMountErrorJson({cError})
                     EndIf
                 EndIf                
             EndIf            
@@ -350,11 +286,11 @@ Static Function fArApiWrite(nOper, lTest, cApiTest, cBodyTest)
 
     CATCH oError
         aAdd(aErrores, oError:Description)
-        cResponse := fMountErrorJson(aErrores)
+        cResponse := ARAPIFUN():fMountErrorJson(aErrores)
     ENDTRY
 
     FreeObj(oJsonBody)
-    fCierraAmbiente(lTest)
+    ARAPIFUN():fCierraAmbiente(lTest)
 
     If lTest
         xResponse := cResponse
@@ -394,8 +330,8 @@ User Function ArApiFile(lTest, cApiTest, cBodyTest)
 
     Default lTest := .F.
 
-    fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
-    fIniciaAmbiente(lTest, cEmp, cSuc, @cCodApi)
+    ARAPIFUN():fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
+    ARAPIFUN():fIniciaAmbiente(lTest, cEmp, cSuc, @cCodApi)
 
     TRY
         oJsonBody := JsonObject():New()
@@ -428,7 +364,7 @@ User Function ArApiFile(lTest, cApiTest, cBodyTest)
             aErrores := fValidaParamsGet(oJsonBody, aParamsCfg)
 
             If Len(aErrores) > 0
-                cResponse := fMountErrorJson(aErrores)
+                cResponse := ARAPIFUN():fMountErrorJson(aErrores)
             Else
                 // Llamo a esta funcion
                 // solo para que me cree las variables
@@ -456,7 +392,7 @@ User Function ArApiFile(lTest, cApiTest, cBodyTest)
         EndIf
 
         If Len(aErrores) > 0
-            cResponse := fMountErrorJson(aErrores)
+            cResponse := ARAPIFUN():fMountErrorJson(aErrores)
             Return oRest:setResponse(cResponse)
         EndIf
 
@@ -468,11 +404,11 @@ User Function ArApiFile(lTest, cApiTest, cBodyTest)
         oRest:setHeaderResponse(jHdr)
 
     CATCH oError
-        cResponse := fMountErrorJson({ oError:Description })
+        cResponse := ARAPIFUN():fMountErrorJson({ oError:Description })
         Return oRest:setResponse(cResponse)
     ENDTRY
 
-    fCierraAmbiente(lTest)
+    ARAPIFUN():fCierraAmbiente(lTest)
 
 Return oRest:setResponse(cBin)
 
@@ -508,51 +444,6 @@ Static Function fReadFileBin(cFile)
     FClose(nHandle)
 
 Return cBin
-
-/*=====================================================================
-|----------------------------------------------------------------------
-| Programa | fInitVars | Autor: Andres Demarziani
-|----------------------------------------------------------------------
-| Descripcion: Inicializa variables comunes
-|----------------------------------------------------------------------
-======================================================================*/
-Static Function fInitVars(lTest, jPath, cBody, cEmp, cSuc, cCodApi, cBodyTest, cApiTest)
-
-    If lTest
-        cBody     := cBodyTest
-        cCodApi   := cApiTest
-    Else
-        jPath     := oRest:getPathParamsRequest()
-        cBody     := oRest:getBodyRequest()
-        cEmp      := jPath["emp"]
-        cSuc      := jPath["suc"]
-        cCodApi   := jPath["codigo-api"]
-    EndIf
-
-Return Nil
-
-/*=====================================================================
-|----------------------------------------------------------------------
-| Programa | fMountErrorJson | Autor: Andres Demarziani
-|----------------------------------------------------------------------
-| Descripcion: Funcion para armar el JSON de errores
-|----------------------------------------------------------------------
-======================================================================*/
-Static Function fMountErrorJson(aErrores)
-
-    Local cJson := '{ "error": "VALIDACION", "detalles": [' 
-    Local nI
-
-    For nI := 1 To Len(aErrores)
-        If nI > 1
-            cJson += ", "
-        EndIf
-        cJson += '"'+fEscapeJson(aErrores[nI])+'"'
-    Next
-
-    cJson += "] }"
-
-Return cJson
 
 /*=====================================================================
 |----------------------------------------------------------------------
@@ -606,7 +497,6 @@ Static Function fCposApi(cTabCpos, cCodApi, aCposApi)
     EndIf
 
 Return Nil
-
 
 /*=====================================================================
 |----------------------------------------------------------------------
@@ -683,163 +573,6 @@ Return .F.
 
 /*=====================================================================
 |----------------------------------------------------------------------
-| Programa | fResultToJson | Autor: Andres Demarziani
-|----------------------------------------------------------------------
-| Descripcion: Convierte aResult (pares {campo,valor}) en JSON
-|              usando el nombre de campo de la query (CPOAPI)
-|----------------------------------------------------------------------
-======================================================================*/
-Static Function fResultToJson(aResult, nFields, aCposOut)
-
-    Local nTotal := Len(aResult)
-    Local nRows  := 0
-    Local cJson  := "["
-    Local nRow, nCol, nIndex
-    Local cKey
-    Local xVal
-    Local nPos
-
-    If nFields > 0
-        nRows := Int(nTotal / nFields)
-    EndIf
-
-    For nRow := 1 To nRows
-        If nRow > 1
-            cJson += ","
-        EndIf
-
-        cJson += "{"
-
-        For nCol := 1 To nFields
-            nIndex := (nRow - 1) * nFields + nCol
-            cKey   := aResult[nIndex, 1]
-            xVal   := aResult[nIndex, 2]
-
-            If nCol > 1
-                cJson += ","
-            EndIf
-
-
-            If (nPos := aScan(aCposOut, {|x| x[PCFG_CAMPO] == cKey })) > 0
-                cJson += '"' + aCposOut[nPos,PCFG_CPOAPI] + '":' + fJsonValue(xVal, aCposOut[nPos,PCFG_PICTURE])
-            EndIf
-        Next nCol
-
-        cJson += "}"
-    Next nRow
-
-    cJson += "]"
-
-Return cJson
-
-/*=====================================================================
-|----------------------------------------------------------------------
-| Programa | fJsonValue | Autor: Andres Demarziani
-|----------------------------------------------------------------------
-| Descripcion: Serializa un valor a JSON (numero, logico, fecha, texto)
-|----------------------------------------------------------------------
-======================================================================*/
-Static Function fJsonValue(xVal, cPict)
-
-    Local cTipo := ValType(xVal)
-
-    Do Case
-        Case cTipo == "N"
-            // Número sin comillas
-            Return cValToChar(xVal)
-
-        Case cTipo == "L"
-            // true / false
-            Return IIf(xVal, "true", "false")
-
-        Case cTipo == "D"
-            // Fecha: lo dejo como "YYYYMMDD" (formato Protheus)
-            // Podés cambiar a otro formato si querés
-            Return '"' + DToS(xVal) + '"'
-
-        Case cTipo == "C"
-            // Texto, escapando caracteres especiales básicos
-            Return '"' + fEscapeJson(IIf(!Empty(cPict), AllTrim(Transform(xVal, cPict)), cValToChar(AllTrim(xVal)))) + '"'
-
-        Otherwise
-            // Cualquier otra cosa, la convierto a string
-            Return '"' + fEscapeJson(cValToChar(xVal)) + '"'
-    EndCase
-
-Return Nil
-
-/*=====================================================================
-|----------------------------------------------------------------------
-| Programa | fEscapeJson | Autor: Andres Demarziani
-|----------------------------------------------------------------------
-| Descripcion: Escapa texto para que sea seguro dentro de un JSON.
-|              Maneja:
-|               - Comillas dobles
-|               - Backslash
-|               - CR / LF
-|               - TAB
-|               - Backspace / FormFeed
-|               - Caracteres de control ASCII (0..31)
-======================================================================*/
-Static Function fEscapeJson(cText)
-
-    Local cRet  := ""
-    Local nPos
-    Local cChar
-    Local nAsc
-    Local cBS   := Chr(92)   // "\"
-
-    If cText == Nil
-        Return ""
-    EndIf
-
-    // Aseguro string
-    If ValType(cText) != "C"
-        cText := cValToChar(cText)
-    EndIf
-
-    For nPos := 1 To Len(cText)
-
-        cChar := SubStr(cText, nPos, 1)
-        nAsc  := Asc(cChar)
-
-        Do Case
-        // JSON mandatory escapes
-        Case cChar == '"'
-            cRet += cBS + '"'
-
-        Case cChar == cBS
-            cRet += cBS + cBS
-
-        // Control characters comunes
-        Case cChar == Chr(10)      // LF
-            cRet += cBS + "n"
-
-        Case cChar == Chr(13)      // CR
-            cRet += cBS + "r"
-
-        Case cChar == Chr(9)       // TAB
-            cRet += cBS + "t"
-
-        Case cChar == Chr(8)       // Backspace
-            cRet += cBS + "b"
-
-        Case cChar == Chr(12)      // Form feed
-            cRet += cBS + "f"
-
-        // Cualquier otro control ASCII (0..31)
-        Case nAsc >= 0 .And. nAsc < 32
-            cRet += " "
-
-        Otherwise
-            cRet += cChar
-        EndCase
-    Next nPos
-
-Return cRet
-
-/*=====================================================================
-|----------------------------------------------------------------------
 | Programa | fArmaQry | Autor: Andres Demarziani
 |----------------------------------------------------------------------
 | Descripcion: Funcion para arma la query de consulta segun
@@ -867,156 +600,6 @@ Static Function fArmaQry(oJsonBody, cSql, cFileName)
     EndIf
 
 Return cQuery
-
-/*=====================================================================
-|----------------------------------------------------------------------
-| Programa | fValidaBody | Autor: Andres Demarziani
-|----------------------------------------------------------------------
-| Descripcion: valida encabezado/detalle1/detalle2 segun EDATO
-|              y segun operación (nOper: 3 alta, 4 modif, 5 borrado)
-======================================================================*/
-Static Function fValidaBody(oJsonBody, nOper, nEDato, aCposEnc, aCposDet1, aCposDet2)
-
-    Local aErr := {}
-    Local aRet
-    Local nI, nJ
-    Local oEnc, aDet1, aDet2
-
-    // Encabezado
-    If nEDato >= EDATOCAB .And. Len(aCposEnc) > 0
-        aRet := fValidaJSON(oJsonBody, "encabezado", .F.)
-        If !aRet[1]
-            AAdd(aErr, aRet[2])
-        Else
-            oEnc := oJsonBody["encabezado"]
-            For nI := 1 To Len(aCposEnc)
-                If fIsObrigOper(aCposEnc[nI], nOper)
-                    If oEnc[aCposEnc[nI,PCFG_CPOAPI]] == Nil
-                        AAdd(aErr, 'Campo encabezado "'+aCposEnc[nI,PCFG_CPOAPI]+'" obligatorio no informado.')
-                    EndIf
-                EndIf
-            Next
-        EndIf
-    EndIf
-
-    // Detalle1
-    If nEDato >= EDATODET1 .And. Len(aCposDet1) > 0
-        aRet := fValidaJSON(oJsonBody, "detalle1", .T.)
-        If !aRet[1]
-            AAdd(aErr, aRet[2])
-        Else
-            aDet1 := oJsonBody["detalle1"]
-            For nI := 1 To Len(aDet1)
-                For nJ := 1 To Len(aCposDet1)
-                    If fIsObrigOper(aCposDet1[nJ], nOper)
-                        If aDet1[nI][aCposDet1[nJ,PCFG_CPOAPI]] == Nil
-                            AAdd(aErr, 'Campo detalle1 "'+aCposDet1[nJ,PCFG_CPOAPI]+'" obligatorio no informado en item '+AllTrim(Str(nI))+'.')
-                        EndIf
-                    EndIf
-                Next
-            Next
-        EndIf
-    EndIf
-
-    // Detalle2
-    If nEDato >= EDATODET2 .And. Len(aCposDet2) > 0
-        aRet := fValidaJSON(oJsonBody, "detalle2", .T.)
-        If !aRet[1]
-            AAdd(aErr, aRet[2])
-        Else
-            aDet2 := oJsonBody["detalle2"]
-            For nI := 1 To Len(aDet2)
-                For nJ := 1 To Len(aCposDet2)
-                    If fIsObrigOper(aCposDet2[nJ], nOper)
-                        If aDet2[nI][aCposDet2[nJ,PCFG_CPOAPI]] == Nil
-                            AAdd(aErr, 'Campo detalle2 "'+aCposDet2[nJ,PCFG_CPOAPI]+'" obligatorio no informado en item '+AllTrim(Str(nI))+'.')
-                        EndIf
-                    EndIf
-                Next
-            Next
-        EndIf
-    EndIf
-
-Return aErr
-
-/*=====================================================================
-|----------------------------------------------------------------------
-| Programa | fValidaJSON | Autor: Andres Demarziani
-|----------------------------------------------------------------------
-| Descripcion: Funcion para validar si un objeto existe en el JSON
-|----------------------------------------------------------------------
-======================================================================*/
-Static Function fValidaJSON(oJsonBody, cNomObj, lArray)
-
-    Local aRet := {.T., ""}
-
-    If oJsonBody[cNomObj] == Nil
-        aRet[1] := .F.
-        aRet[2] := 'Objeto "'+cNomObj+'" no encontrado.'
-    EndIf
-
-    If aRet[1] .And. lArray .And. ValType(oJsonBody[cNomObj]) != "A"
-        aRet[1] := .F.
-        aRet[2] := 'El objeto "'+cNomObj+'" no es un Array.'
-    EndIf
-
-Return aRet
-
-/*=====================================================================
-|----------------------------------------------------------------------
-| Programa | Str2Array | Autor: Andres Demarziani
-|----------------------------------------------------------------------
-| Descripcion: Convierte una cadena separada por cSep en un array
-|----------------------------------------------------------------------
-======================================================================*/
-Static Function Str2Array(cString, cSep)
-
-    Local aReturn := { },;
-        cAux    := cString,;
-        nPos    := 0
-
-    While At( cSep, cAux ) > 0
-    nPos := At( cSep, cAux )
-        Aadd( aReturn, SubStr( cAux, 1, nPos-1 ) )
-        cAux := SubStr( cAux, nPos+1 )
-    End
-
-    Aadd(aReturn, cAux)
-
-Return aReturn
-
-/*=====================================================================
-|----------------------------------------------------------------------
-| Programa | fIniciaAmbiente | Autor: Andres Demarziani
-|----------------------------------------------------------------------
-| Descripcion: Inicia el ambiente de ejecución
-|----------------------------------------------------------------------
-======================================================================*/
-Static Function fIniciaAmbiente(lTest, cEmp, cSuc, cCodApi)
-
-    If !lTest
-        RpcSetType(3)
-        RpcSetEnv(cEmp, cSuc, "admin", "galarza", "FAT")
-    EndIf
-
-    cCodApi := PadR(cCodApi, TamSX3("ZJ1_CODIGO")[1])
-
-Return Nil
-
-/*=====================================================================
-|----------------------------------------------------------------------
-| Programa | fCierraAmbiente | Autor: Andres Demarziani
-|----------------------------------------------------------------------
-| Descripcion: Cierra el ambiente de ejecución
-|----------------------------------------------------------------------
-======================================================================*/
-Static Function fCierraAmbiente(lTest)
-
-    If !lTest
-        // RpcClearEnv()
-    EndIf
-    
-Return Nil
 
 /*=====================================================================
 |----------------------------------------------------------------------
@@ -1161,7 +744,7 @@ Static Function fEjecutaFuncion(cFuncion, nOper, nEDato, aEncab, aDet1, aDet2, c
 
     If lMsErroAuto
         lOk     := .F.
-        cError  := fEscapeJson(MostraErro("ENTRADA"))
+        cError  := ARAPIFUN():fEscapeJson(MostraErro("ENTRADA"))
     EndIf	
 
 Return lOk
@@ -1193,7 +776,7 @@ Static Function fArrPairToJson(aPairs)
     Local nI
     For nI := 1 To Len(aPairs)
         If nI > 1; c += ","; EndIf
-        c += '"' + aPairs[nI,1] + '":' + '"' + fEscapeJson(cValToChar(aPairs[nI,2])) + '"'
+        c += '"' + aPairs[nI,1] + '":' + '"' + ARAPIFUN():fEscapeJson(cValToChar(aPairs[nI,2])) + '"'
     Next
     c += "}"
 Return c
@@ -1362,7 +945,7 @@ Return .T.
 
 /*=====================================================================
 |----------------------------------------------------------------------
-| Programa | fValidaExistencia | Autor: Andres Demarziani
+| Programa | fExisteRegistro | Autor: Andres Demarziani
 |----------------------------------------------------------------------
 | Ejecuta SELECT 1 en la tabla configurada usando la clave configurada
 | cChave ejemplo: "F1_FORNECE+F1_LOJA+F1_ESPECIE"
@@ -1370,7 +953,7 @@ Return .T.
 ======================================================================*/
 Static Function fExisteRegistro(cTabela, cChave, aEncab, aErrores)
 
-    Local aCampos := Str2Array(cChave, "+")
+    Local aCampos := ARAPIFUN():Str2Array(cChave, "+")
     Local cWhere  := ""
     Local nI
     Local cCampo, xVal
@@ -1475,3 +1058,184 @@ Return cRet
 ======================================================================*/
 Static Function fSqlEscape(cText)
 Return StrTran(cText, "'", "''")
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fValidaBody | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: valida encabezado/detalle1/detalle2 segun EDATO
+|              y segun operación (nOper: 3 alta, 4 modif, 5 borrado)
+======================================================================*/
+Static Function fValidaBody(oJsonBody, nOper, nEDato, aCposEnc, aCposDet1, aCposDet2)
+
+    Local aErr := {}
+    Local aRet
+    Local nI, nJ
+    Local oEnc, aDet1, aDet2
+
+    // Encabezado
+    If nEDato >= EDATOCAB .And. Len(aCposEnc) > 0
+        aRet := fValidaJSON(oJsonBody, "encabezado", .F.)
+        If !aRet[1]
+            AAdd(aErr, aRet[2])
+        Else
+            oEnc := oJsonBody["encabezado"]
+            For nI := 1 To Len(aCposEnc)
+                If fIsObrigOper(aCposEnc[nI], nOper)
+                    If oEnc[aCposEnc[nI,PCFG_CPOAPI]] == Nil
+                        AAdd(aErr, 'Campo encabezado "'+aCposEnc[nI,PCFG_CPOAPI]+'" obligatorio no informado.')
+                    EndIf
+                EndIf
+            Next
+        EndIf
+    EndIf
+
+    // Detalle1
+    If nEDato >= EDATODET1 .And. Len(aCposDet1) > 0
+        aRet := fValidaJSON(oJsonBody, "detalle1", .T.)
+        If !aRet[1]
+            AAdd(aErr, aRet[2])
+        Else
+            aDet1 := oJsonBody["detalle1"]
+            For nI := 1 To Len(aDet1)
+                For nJ := 1 To Len(aCposDet1)
+                    If fIsObrigOper(aCposDet1[nJ], nOper)
+                        If aDet1[nI][aCposDet1[nJ,PCFG_CPOAPI]] == Nil
+                            AAdd(aErr, 'Campo detalle1 "'+aCposDet1[nJ,PCFG_CPOAPI]+'" obligatorio no informado en item '+AllTrim(Str(nI))+'.')
+                        EndIf
+                    EndIf
+                Next
+            Next
+        EndIf
+    EndIf
+
+    // Detalle2
+    If nEDato >= EDATODET2 .And. Len(aCposDet2) > 0
+        aRet := fValidaJSON(oJsonBody, "detalle2", .T.)
+        If !aRet[1]
+            AAdd(aErr, aRet[2])
+        Else
+            aDet2 := oJsonBody["detalle2"]
+            For nI := 1 To Len(aDet2)
+                For nJ := 1 To Len(aCposDet2)
+                    If fIsObrigOper(aCposDet2[nJ], nOper)
+                        If aDet2[nI][aCposDet2[nJ,PCFG_CPOAPI]] == Nil
+                            AAdd(aErr, 'Campo detalle2 "'+aCposDet2[nJ,PCFG_CPOAPI]+'" obligatorio no informado en item '+AllTrim(Str(nI))+'.')
+                        EndIf
+                    EndIf
+                Next
+            Next
+        EndIf
+    EndIf
+
+Return aErr
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fResultToJson | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Convierte aResult (pares {campo,valor}) en JSON
+|              usando el nombre de campo de la query (CPOAPI)
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fResultToJson(aResult, nFields, aCposOut)
+
+    Local nTotal := Len(aResult)
+    Local nRows  := 0
+    Local cJson  := "["
+    Local nRow, nCol, nIndex
+    Local cKey
+    Local xVal
+    Local nPos
+
+    If nFields > 0
+        nRows := Int(nTotal / nFields)
+    EndIf
+
+    For nRow := 1 To nRows
+        If nRow > 1
+            cJson += ","
+        EndIf
+
+        cJson += "{"
+
+        For nCol := 1 To nFields
+            nIndex := (nRow - 1) * nFields + nCol
+            cKey   := aResult[nIndex, 1]
+            xVal   := aResult[nIndex, 2]
+
+            If nCol > 1
+                cJson += ","
+            EndIf
+
+
+            If (nPos := aScan(aCposOut, {|x| x[PCFG_CAMPO] == cKey })) > 0
+                cJson += '"' + aCposOut[nPos,PCFG_CPOAPI] + '":' + fJsonValue(xVal, aCposOut[nPos,PCFG_PICTURE])
+            EndIf
+        Next nCol
+
+        cJson += "}"
+    Next nRow
+
+    cJson += "]"
+
+Return cJson
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fJsonValue | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Serializa un valor a JSON (numero, logico, fecha, texto)
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fJsonValue(xVal, cPict)
+
+    Local cTipo := ValType(xVal)
+
+    Do Case
+        Case cTipo == "N"
+            // Número sin comillas
+            Return cValToChar(xVal)
+
+        Case cTipo == "L"
+            // true / false
+            Return IIf(xVal, "true", "false")
+
+        Case cTipo == "D"
+            // Fecha: lo dejo como "YYYYMMDD" (formato Protheus)
+            // Podés cambiar a otro formato si querés
+            Return '"' + DToS(xVal) + '"'
+
+        Case cTipo == "C"
+            // Texto, escapando caracteres especiales básicos
+            Return '"' + ARAPIFUN():fEscapeJson(IIf(!Empty(cPict), AllTrim(Transform(xVal, cPict)), cValToChar(AllTrim(xVal)))) + '"'
+
+        Otherwise
+            // Cualquier otra cosa, la convierto a string
+            Return '"' + ARAPIFUN():fEscapeJson(cValToChar(xVal)) + '"'
+    EndCase
+
+Return Nil
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fValidaJSON | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Funcion para validar si un objeto existe en el JSON
+|----------------------------------------------------------------------
+======================================================================*/
+Static Function fValidaJSON(oJsonBody, cNomObj, lArray)
+
+    Local aRet := {.T., ""}
+
+    If oJsonBody[cNomObj] == Nil
+        aRet[1] := .F.
+        aRet[2] := 'Objeto "'+cNomObj+'" no encontrado.'
+    EndIf
+
+    If aRet[1] .And. lArray .And. ValType(oJsonBody[cNomObj]) != "A"
+        aRet[1] := .F.
+        aRet[2] := 'El objeto "'+cNomObj+'" no es un Array.'
+    EndIf
+
+Return aRet
