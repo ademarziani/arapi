@@ -137,11 +137,11 @@ Return xResponse
 
 /*=====================================================================
 |----------------------------------------------------------------------
-| Programa | ArApiGet | Autor: Andres Demarziani
+| Programa | ArApiPost | Autor: Andres Demarziani
 |----------------------------------------------------------------------
 | Decorador: @Post
 |----------------------------------------------------------------------
-| Descripcion: 
+| Descripcion: Inserta datos segun la configuracion
 |----------------------------------------------------------------------
 ======================================================================*/
 @Post("arapi/:emp/:suc/:codigo-api")
@@ -154,7 +154,7 @@ Return fArApiWrite(OPERPOST, lTest, cApiTest, cBodyTest)
 |----------------------------------------------------------------------
 | Decorador: @Put
 |----------------------------------------------------------------------
-| Descripcion: 
+| Descripcion: Actualiza datos segun la configuracion
 |----------------------------------------------------------------------
 ======================================================================*/
 @Put("arapi/:emp/:suc/:codigo-api")
@@ -167,7 +167,7 @@ Return fArApiWrite(OPERPUT, lTest, cApiTest, cBodyTest)
 |----------------------------------------------------------------------
 | Decorador: @Delete
 |----------------------------------------------------------------------
-| Descripcion:
+| Descripcion: Elimina datos segun la configuracion
 |----------------------------------------------------------------------
 ======================================================================*/
 @Delete("arapi/:emp/:suc/:codigo-api")
@@ -178,7 +178,7 @@ Return fArApiWrite(OPERDELETE, lTest, cApiTest, cBodyTest)
 |----------------------------------------------------------------------
 | Programa | fArApiWrite | Autor: Andres Demarziani
 |----------------------------------------------------------------------
-| Descripcion: Funcion que procesa escrituras (POST, PATCH, DELETE)
+| Descripcion: Funcion que procesa escrituras (POST, PUT, DELETE)
 |----------------------------------------------------------------------
 ======================================================================*/
 Static Function fArApiWrite(nOper, lTest, cApiTest, cBodyTest)
@@ -233,6 +233,10 @@ Static Function fArApiWrite(nOper, lTest, cApiTest, cBodyTest)
         // Error de parseo del JSON
         If Empty(cResponse) .And. ValType(cParJson) == "C"
             cResponse := '{ "error": "'+cParJson+'" }'
+        EndIf
+
+        If Empty(cFuncion)
+            cResponse := '{ "error": "Funcion no configurada para Alta / Modificacion / Baja" }'
         EndIf
 
         If Empty(cResponse)
@@ -304,12 +308,12 @@ Return xResponse
 |----------------------------------------------------------------------
 | Programa | ArApiFile | Autor: Andres Demarziani
 |----------------------------------------------------------------------
-| Decorador: @Get
+| Decorador: @Post
 |----------------------------------------------------------------------
 | Descripcion: Devuelve un archivo (PDF) segun configuracion ZJ1_PATH
 |----------------------------------------------------------------------
 ======================================================================*/
-@Get("arapi/file/:emp/:suc/:codigo-api")
+@Post("arapi/file/:emp/:suc/:codigo-api")
 User Function ArApiFile(lTest, cApiTest, cBodyTest)
 
     Local jPath
@@ -470,7 +474,6 @@ Static Function fCposApi(cTabCpos, cCodApi, aCposApi)
 
     dbSelectArea(cTabCpos)
     dbSetOrder(3)
-
     If dbSeek(cClave)
         While !Eof() .And. &(cClaveTab) == cClave
 

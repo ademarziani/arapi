@@ -17,6 +17,7 @@ CLASS ARAPIFUN
     STATIC METHOD fEscapeJson()
     STATIC METHOD fCierraAmbiente()
     STATIC METHOD Str2Array()
+    STATIC METHOD GetRootPath()
 
 END CLASS
 
@@ -199,3 +200,33 @@ METHOD Str2Array(cString, cSep) CLASS ARAPIFUN
     Aadd(aReturn, cAux)
 
 Return aReturn
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | fGetRootPath | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Obtiene el root path del servidor HTTP configurado
+|----------------------------------------------------------------------
+======================================================================*/
+METHOD GetRootPath() CLASS ARAPIFUN
+
+    Local cAppSrv       := GetAdv97()
+    Local cServers      := AllTrim(GetPvProfString("HTTPSERVER", "Servers", "", cAppSrv))
+    Local nIndexComma   := At(",", cServers) 
+    Local cServer       := If(nIndexComma > 0, AllTrim(SubStr(cServers, 1, nIndexComma-1)), cServers)
+    Local cLocation     := ""
+    Local cRootPath     := "/"
+
+    If !Empty(cServer)
+        cLocation := AllTrim(GetPvProfString(cServer, "Locations", "", cAppSrv))
+
+        If !Empty(cLocation)
+            cRootPath := AllTrim(GetPvProfString(cLocation, "Path", "/", cAppSrv))
+        EndIf
+    EndIf
+
+    If !Right(cRootPath,1) $ "/"
+        cRootPath += "/"
+    EndIf
+
+Return cRootPath
