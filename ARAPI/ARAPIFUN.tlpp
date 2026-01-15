@@ -177,7 +177,7 @@ Return cRet
 | Descripcion: Convierte una cadena separada por cSep en un array
 |----------------------------------------------------------------------
 ======================================================================*/
-Static Function Str2Array(cString, cSep)
+METHOD Str2Array(cString, cSep) CLASS ARAPIFUN
 
     Local aReturn := { },;
         cAux    := cString,;
