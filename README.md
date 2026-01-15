@@ -237,17 +237,20 @@ Dentro de la estructura definida por `RootPath` del AppServer (por ejemplo `Prot
 ### 4.2 Archivo `allowed_uris.lst`
 
 Lista de endpoints que **NO requieren autenticación por token**:
+En esta sección se podrán configurar todos los endpoints que se deseen.
+Para una configuración inicial, al menos se deberán configurar los siguientes:
 
 ```
 /arapi/{codigo_empresa}/{codigo_sucursal}/docs
 /arapi/{codigo_empresa}/{codigo_sucursal}/openapi.json
 ```
-Donde:
+Dónde:
 
-* `codigo_empresa` Codigo de empresa segun el ambiente del cliente.
-* `codigo_sucursal` Codigo de sucursal segun el ambiente del cliente.
+* `codigo_empresa` Código de empresa segun el ambiente del cliente.
+* `codigo_sucursal` Código de sucursal segun el ambiente del cliente.
 
 ---
+*En caso de no agregarse estos endpoints, la documentación de Swagger no podrá funcionar correctamente.*
 
 ## 5. Autenticación OAuth2
 
