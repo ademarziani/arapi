@@ -302,16 +302,16 @@ https://{servidor}:{puerto}/{path_segun_ini}/arapi/{codigo_empresa}/{codigo_sucu
 ```
 
 Donde 
-* `servidor` Alias o Dominio del servidor según ambiente del cliente.
-* `puerto` Numero de puerto en donde se configuro el servicio API Rest.
-* `path_segun_ini` corresponde a:
+* `servidor`: Alias o Dominio del servidor según ambiente del cliente.
+* `puerto`: Numero de puerto en donde se configuro el servicio API Rest.
+* `path_segun_ini`: corresponde a:
 
 ```ini
 [HTTP_ROOT]
 Path=/rest
 ```
-* `codigo_empresa` Código de empresa según el ambiente del cliente.
-* `codigo_sucursal` Código de sucursal según el ambiente del cliente.
+* `codigo_empresa`: Código de empresa según el ambiente del cliente.
+* `codigo_sucursal`: Código de sucursal según el ambiente del cliente.
 
 Ejemplo:
 
