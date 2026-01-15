@@ -253,28 +253,28 @@ Donde:
 
 ### Endpoint de obtención de token
 
-Para poder ejecutar cada uno de los endpoints a partir de la APIs configuradas, primero se debera obtener el token.
+Para poder ejecutar cada uno de los endpoints a partir de la APIs configuradas, primero se deberá obtener el token.
 
 ```
 https://{servidor}:{puerto}/{path_segun_ini}/tlpp/oauth2/token
 ```
 
 Donde:
-* `servidor`: Alias o Dominio del servidor segun ambiente del cliente.
-* `puerto`: Numero de puerto en donde se configuro el servicio API Rest.
+* `servidor`: Alias o Dominio del servidor según ambiente del cliente.
+* `puerto`: Numero de puerto en donde se configuró el servicio API Rest.
 * `path_segun_ini`: corresponde a:
 
 ```ini
 [HTTP_ROOT]
 Path=/rest
 ```
-* `codigo_empresa`: Codigo de empresa segun el ambiente del cliente.
-* `codigo_sucursal`: Codigo de sucursal segun el ambiente del cliente.
+* `codigo_empresa`: Código de empresa según el ambiente del cliente.
+* `codigo_sucursal`: Código de sucursal según el ambiente del cliente.
 
 Parametros:
 * `grant_type`: Valor fijo "password"
-* `username`: Codigo de usuario segun la configuracion establecida en config.json
-* `password`: Contrasena para el usuario informado, segun la configuracion establecida en config.json
+* `username`: Código de usuario según la configuracion establecida en config.json
+* `password`: Contraseña para el usuario informado, según la configuracion establecida en config.json
 
 Ejemplo:
 
@@ -293,6 +293,7 @@ Authorization: Bearer <token>
 ## 6. Swagger (Documentación de la API)
 
 La documentación Swagger se genera automáticamente a partir de la configuraciones que se fueron cargando en las tablas ZJ1, ZJ2, ZJ3, ZJ4, ZJ5, ZJ6.
+A partir del swagger, el usuario y/o desarrollador podra verificar los parametros de entrada y salida de cada endpoint configurado como asi, la forma en que deberán hacer las peticiones correspondientes.
 
 ### URL del Swagger
 
@@ -301,7 +302,7 @@ https://{servidor}:{puerto}/{path_segun_ini}/arapi/{codigo_empresa}/{codigo_sucu
 ```
 
 Donde 
-* `servidor` Alias o Dominio del servidor segun ambiente del cliente.
+* `servidor` Alias o Dominio del servidor según ambiente del cliente.
 * `puerto` Numero de puerto en donde se configuro el servicio API Rest.
 * `path_segun_ini` corresponde a:
 
@@ -309,8 +310,8 @@ Donde
 [HTTP_ROOT]
 Path=/rest
 ```
-* `codigo_empresa` Codigo de empresa segun el ambiente del cliente.
-* `codigo_sucursal` Codigo de sucursal segun el ambiente del cliente.
+* `codigo_empresa` Código de empresa según el ambiente del cliente.
+* `codigo_sucursal` Código de sucursal según el ambiente del cliente.
 
 Ejemplo:
 
