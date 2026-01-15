@@ -51,11 +51,18 @@ Return Nil
 ======================================================================*/
 METHOD fIniciaAmbiente(lTest, cEmp, cSuc, cCodApi) CLASS ARAPIFUN
 
-    Local aUserProtheus := U_ArApiGetProtheusUser()
+    Local aUserProtheus := U_ArApiProtheusUser()
+    Local oError
 
     If !lTest
         RpcSetType(3)
-        RpcSetEnv(cEmp, cSuc, aUserProtheus[1], aUserProtheus[2], "FAT")
+        If !RpcSetEnv(cEmp, cSuc, aUserProtheus[1], aUserProtheus[2], "FAT")
+            oError := ErrorClass():New()            
+            oError:genCode := 150126
+            oError:description := "Usuario/Contraseña Protheus inválido."
+
+            THROW oError
+        EndIf
     EndIf
 
     cCodApi := PadR(cCodApi, TamSX3("ZJ1_CODIGO")[1])

@@ -61,10 +61,10 @@ User Function ArApiGet(lTest, cApiTest, cBodyTest)
 
     Default lTest   := .F.
 
-    ARAPIFUN():fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
-    ARAPIFUN():fIniciaAmbiente(lTest, cEmp, cSuc, @cCodApi)
-
     TRY 
+        ARAPIFUN():fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
+        ARAPIFUN():fIniciaAmbiente(lTest, cEmp, cSuc, @cCodApi)
+
         oJsonBody := JsonObject():New()
         cParJson  := oJsonBody:FromJson(IIf(Empty(cBody), '{ "params": {} }', cBody))
         
@@ -211,10 +211,10 @@ Static Function fArApiWrite(nOper, lTest, cApiTest, cBodyTest)
 
     Default lTest   := .F.
 
-    ARAPIFUN():fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
-    ARAPIFUN():fIniciaAmbiente(lTest, cEmp, cSuc, @cCodApi)
-
     TRY 
+        ARAPIFUN():fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
+        ARAPIFUN():fIniciaAmbiente(lTest, cEmp, cSuc, @cCodApi)
+
         oJsonBody := JsonObject():New()
         cParJson  := oJsonBody:FromJson(cBody) 
 
@@ -330,10 +330,10 @@ User Function ArApiFile(lTest, cApiTest, cBodyTest)
 
     Default lTest := .F.
 
-    ARAPIFUN():fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
-    ARAPIFUN():fIniciaAmbiente(lTest, cEmp, cSuc, @cCodApi)
-
     TRY
+        ARAPIFUN():fInitVars(lTest, @jPath, @cBody, @cEmp, @cSuc, @cCodApi, cBodyTest, cApiTest)
+        ARAPIFUN():fIniciaAmbiente(lTest, cEmp, cSuc, @cCodApi)
+
         oJsonBody := JsonObject():New()
         cParJson  := oJsonBody:FromJson(IIf(Empty(cBody), '{ "params": {} }', cBody))
             

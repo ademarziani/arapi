@@ -8,9 +8,6 @@
 #define _rest_oAuth2_client_id        '160520'
 #define _rest_oAuth2_user             'api_user_test'
 #define _rest_oAuth2_password         'A7$Tn9@eQ!R4kZ8LxM2#P'
- 
-Static cUserAPI     := ""
-Static cPassAPI     := ""
 
 /*=====================================================================
 |----------------------------------------------------------------------
@@ -136,7 +133,9 @@ User Function ArApiProtheusUser()
     Local cFilePath  := "\arapi\user_protheus.json"
     Local cContent   := ""
     Local jUser      := JsonObject():New()
-    Local cParJson   := ""
+    Local cParJson   := "" 
+    Local cUserAPI
+    Local cPassAPI
 
     // Lee el contenido del archivo
     cContent := ReadJsonFile(cFilePath)
@@ -159,15 +158,4 @@ User Function ArApiProtheusUser()
 
     FreeObj(jUser)
 
-Return Nil
-
-/*=====================================================================
-|----------------------------------------------------------------------
-| Programa | ArApiGetProtheusUser | Autor: Andres Demarziani
-|----------------------------------------------------------------------
-| Descripcion: Función que devuelve las credenciales de Protheus
-|              en un array: { usuario, password }
-|----------------------------------------------------------------------
-======================================================================*/
-User Function ArApiGetProtheusUser()
 Return { cUserAPI, cPassAPI }
