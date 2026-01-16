@@ -54,37 +54,37 @@ Return aRet
 ======================================================================*/
 User Function ArApiParamsProvider()
  
-  Local cArchivo    := "\arapi\config.json"
-  Local jTlppAux    := JSonObject():New()
-  Local jTlppParams := JSonObject():New()
+    Local cArchivo    := "\arapi\config.json"
+    Local jTlppAux    := JSonObject():New()
+    Local jTlppParams := JSonObject():New()
 
-  Local cArcConfig  := ReadJsonFile(cArchivo)
-  Local cDefParams
-  Local cParJson
+    Local cArcConfig  := ReadJsonFile(cArchivo)
+    Local cDefParams
+    Local cParJson
 
-  cDefParams := '{'+;
-    '"client_id":"'+_rest_oAuth2_client_id+'",'+;
-    '"client_secret":"'+_rest_oAuth2_secret_+'",'+;
-    '"username":"'+_rest_oAuth2_user+'",'+;
-    '"password":"'+ _rest_oAuth2_password+'",'+;
-    '"access_expires":'+cValToChar(_rest_oAuth2_access_expires)+','+;
-    '"refresh_expires":"'+_rest_oAuth2_refresh_expires+'",'+;
-    '"grant_type" : "password"'+;
-    '}'
+    cDefParams := '{'+;
+        '"client_id":"'+_rest_oAuth2_client_id+'",'+;
+        '"client_secret":"'+_rest_oAuth2_secret_+'",'+;
+        '"username":"'+_rest_oAuth2_user+'",'+;
+        '"password":"'+ _rest_oAuth2_password+'",'+;
+        '"access_expires":'+cValToChar(_rest_oAuth2_access_expires)+','+;
+        '"refresh_expires":"'+_rest_oAuth2_refresh_expires+'",'+;
+        '"grant_type" : "password"'+;
+        '}'
 
-  If Empty(cArcConfig)
-    // Si no existe el archivo, uso los params por defecto
-    jTlppParams:fromJson(cDefParams)
-  Else
-    cParJson := jTlppAux:fromJson(cArcConfig)
-
-    // Si el JSON tiene un error, uso los params por defecto
-    If ValType(cParJson) == "C"
-      jTlppParams:fromJson(cDefParams)
+    If Empty(cArcConfig)
+        // Si no existe el archivo, uso los params por defecto
+        jTlppParams:fromJson(cDefParams)
     Else
-      jTlppParams:fromJson(cArcConfig)
+        cParJson := jTlppAux:fromJson(cArcConfig)
+
+        // Si el JSON tiene un error, uso los params por defecto
+        If ValType(cParJson) == "C"
+            jTlppParams:fromJson(cDefParams)
+        Else
+            jTlppParams:fromJson(cArcConfig)
+        EndIf
     EndIf
-  EndIf
 
 Return jTlppParams
 
