@@ -1,5 +1,8 @@
 #include "Protheus.ch"
 
+#define CRLF    CHR(13)+CHR(10)
+#define LF      CHR(10)
+
 /*=====================================================================
 |---------------------------------------------------------------------|
 | Programa | ARAPIFUN | Autor: Andres Demarziani | Fecha: 03/02/2020  |
@@ -18,6 +21,7 @@ CLASS ARAPIFUN
     STATIC METHOD fCierraAmbiente()
     STATIC METHOD Str2Array()
     STATIC METHOD GetRootPath()
+    STATIC METHOD SQLParser()
 
 END CLASS
 
@@ -230,3 +234,44 @@ METHOD GetRootPath() CLASS ARAPIFUN
     EndIf
 
 Return cRootPath
+
+/*=====================================================================
+|----------------------------------------------------------------------
+| Programa | SQLParser | Autor: Andres Demarziani
+|----------------------------------------------------------------------
+| Descripcion: Formatea una cadena SQL para su uso en el programa
+|----------------------------------------------------------------------
+======================================================================*/
+METHOD SQLParser(cSql) CLASS ARAPIFUN
+
+Local aStrSql	:= {}
+Local cLinSql	:= ''
+Local cNewSql	:= ''
+Local cRet		:= ''
+Local nS		:= 1
+
+If Empty(cSql)
+	Return cRet
+EndIf
+
+If ( "UPDATE"$cSql .Or. "TRUNCATE"$cSql .Or. "INSERT"$cSql .Or. "DELETE"$cSql )
+	MsgStop("No esta permitido ejecutar sentencias de actualización de base de datos (UPDATE, TRUNCATE, DELETE, INSERT).", "Verifique")
+	Return cRet
+EndIf
+
+aStrSql	:= ARAPIFUN():Str2Array(cSql,CRLF)	
+
+For nS := 1 To Len(aStrSql)
+    cLinSql	:= StrTran(aStrSql[nS],'"',"'")
+    cLinSql	:= StrTran(cLinSql,CRLF," ")
+    cLinSql	:= StrTran(cLinSql,LF," ")
+    cLinSql	:= '"'+cLinSql+'"'
+    cLinSql	:= StrTran(cLinSql,"[",'"+')
+    cLinSql	:= StrTran(cLinSql,"]",'+"')
+    
+    cNewSql	+= &(cLinSql)+CRLF
+Next nS	
+
+cRet := cNewSql
+
+Return cRet

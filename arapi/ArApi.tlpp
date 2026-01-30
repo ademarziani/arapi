@@ -595,7 +595,7 @@ Static Function fArmaQry(oJsonBody, cSql, cFileName)
     Next
 
     If cSql != Nil
-        cQuery := U_fStrSQL(cSql, .F.)
+        cQuery := ARAPIFUN():SQLParser(cSql)
     EndIf
 
     If cFileName != Nil
